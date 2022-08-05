@@ -6,12 +6,7 @@ from threading import Thread
 load_dotenv()
 
 
-
-
-
-
 app = Flask(__name__)
-
 
 
 def print_debug(*msg):
@@ -19,29 +14,26 @@ def print_debug(*msg):
     sys.stdout.flush()
 
 def callback(ch, method, properties, body):
-    #print_debug(" [x] Received %s" % body)
     cmd = body.decode()
-    if cmd == 'hey':
-        print_debug("hey there")
-    elif cmd == 'hello':
-        print_debug("well hello there")
-    else:
-        print_debug("sorry i did not understand ", cmd)
-    #print_debug(" [x] Done")
-    ch.basic_ack(delivery_tag=method.delivery_tag)
+    
+    if properties.content_type == 'product_created':
+        print_debug("product created in DATABASE",cmd)
+    elif properties.content_type == 'product_updated':
+        print_debug("product updated in DATABASE",cmd)
+    elif properties.content_type == 'product_deleted':
+        print_debug("product deleted in DATABASE",cmd)
+    #ch.basic_ack(delivery_tag=method.delivery_tag)
 
 
 def thread_listerning():
     #return
-    url = os.environ.get('CLOUDAMQP_URL', 'amqp://guest:guest@localhost:5672/%2f')
-    params = pika.URLParameters(url)
-    connection = pika.BlockingConnection(params)
+    connection = pika_connect()
     channel = connection.channel()
     channel.queue_declare(queue='task_queue11', durable=True)
-    
     channel.basic_qos(prefetch_count=1)
-    channel.basic_consume(queue='task_queue11', on_message_callback=callback)
+    channel.basic_consume(queue='task_queue11', on_message_callback=callback, auto_ack=True)
     channel.start_consuming()
+    connection.close()
 
 
 @app.route('/')
@@ -51,61 +43,52 @@ def index():
 
 @app.route('/add-job/<cmd>')
 def add(cmd):
-    
-    url = os.environ.get('CLOUDAMQP_URL', 'amqp://guest:guest@localhost:5672/%2f')
-    print_debug(url)
-    params = pika.URLParameters(url)
-    connection = pika.BlockingConnection(params)
-    channel = connection.channel()
-    channel.queue_declare(queue='task_queue', durable=True)
-    channel.basic_publish(
-        exchange='',
-        routing_key='task_queue',
-        body=cmd,
-        properties=pika.BasicProperties(
-            delivery_mode=2,  # make message persistent
-        ))
-    connection.close()
     return " [x] Sent: %s" % cmd
 
-connection = None
-def connect():
-    global connection
+
+def pika_connect():
     url = os.environ.get('CLOUDAMQP_URL', 'amqp://guest:guest@localhost:5672/%2f')
     params = pika.URLParameters(url)
     connection = pika.BlockingConnection(params)
+    return connection
 
-def close():
-    connection.close()
+def pika_close(conec):
+    conec.close()
 
-def test(cmd):
-    channel = connection.channel()
-    channel.queue_declare(queue='task_queue', durable=True)
+def set_content(type):
+    return pika.BasicProperties(
+                content_type=type,
+                content_encoding='utf-8',
+                headers={'key': 'value'},
+                delivery_mode = 2,
+            )
+
+def send_cmd(conec,cmd):
+    channel = conec.channel()
+    channel.queue_declare(queue='task_queue11', durable=True)
+    prop = set_content('product_created')
     channel.basic_publish(
         exchange='',
         routing_key='task_queue11',
         body=cmd,
-        properties=pika.BasicProperties(
-            delivery_mode=2,  # make message persistent
-        ))
+        properties=prop)
     print_debug(" pub finish")
 
 if __name__ == '__main__':
-    connect()
+    connection = pika_connect()
     function = thread_listerning
     t1=Thread(target=function)
     t1.daemon = True
     t1.start()
-    #test("gfgfgfgf")
     i = 0
+    send_cmd(connection,cmd = str(i))
     while(True):
-        #time.sleep(1)
         i=i+1
-        if i<100:
+        if i<10:
             #pass
-            test(str(i))
-        elif i ==100:
+            send_cmd(connection,cmd = str(i))
+        elif i ==10:
             print_debug("done pub XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
-            close()
+            pika_close(connection)
 
     #app.run(debug=True, host='0.0.0.0')
