@@ -9,8 +9,8 @@ from flask_sqlalchemy import SQLAlchemy
 
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://data.db'
+#app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///data.db'
 #CORS(app)
 
 db = SQLAlchemy(app)
@@ -21,7 +21,7 @@ class paymentinf(db.Model):
     tmnCode: str
     haskKey: str
     partCode: str
-    name = db.Column(db.String(200), primary_key=True, autoincrement=True)
+    name = db.Column(db.String(200), primary_key=True)
     tmnCode = db.Column(db.String(200))
     haskKey = db.Column(db.String(200))
     partCode = db.Column(db.String(200))
@@ -36,8 +36,7 @@ def like(id):
     req = requests.get('http://docker.for.mac.localhost:8000/api/user')
     json = req.json()
     try:
-        product_id = id
-        product_user = ProductUser(user_id=json['id'], product_id=product_id)
+        product_user = paymentinf(name='1', tmnCode='product_id', haskKey='3', partCode='4')
         db.session.add(product_user)
         db.session.commit()
     except:
@@ -47,8 +46,20 @@ def like(id):
         "message": "success"
     })
 
-def test():
+def query_all():
     print(paymentinf.query.all())
+
+def update_data():
+    admin = paymentinf.query.filter_by(name='zalo').first()
+    admin.partCode = 'my_new_email@example.com'
+    db.session.commit()   
+
+def add_data():
+    product_user = paymentinf(name='1', tmnCode='product_id', haskKey='3', partCode='4')
+    db.session.add(product_user)
+    db.session.commit()
 if __name__ == '__main__':
-    test()
+    query_all()
+    update_data()
+    add_data()
     #app.run(debug=True, host='0.0.0.0')
