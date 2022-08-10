@@ -39,6 +39,9 @@ class paymentinf(db.Model):
 @dataclass
 class QuantityItems(db.Model):
     __tablename__  = "QuantityItems"
+    id_item: int
+    name: str
+    Quantity: int
     id_item = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(200))
     Quantity = db.Column(db.Integer)
@@ -55,16 +58,26 @@ class glassQuantityItems(db.Model):
 
 @dataclass
 class orderList(db.Model):
+    __tablename__  = "orderList"
+    id_order: int
+    id_menu: int
+    type: int
+    type: int
     id_order = db.Column(db.Integer, primary_key=True)
     id_menu = db.Column(db.Integer)
     type = db.Column(db.Integer)
-    percent = db.Column(db.Integer)
+    type = db.Column(db.Integer)
 
 @dataclass
 class infor(db.Model):
+    __tablename__  = "infor"
+    paras: str
+    value: str
+    passw: str
+    secre: str
     paras = db.Column(db.String(200), primary_key=True)
     value = db.Column(db.String(200))
-    pass1 = db.Column(db.String(200)) ###################
+    passw = db.Column("pass",db.String(200)) ###################
     secre = db.Column(db.String(200))
 
 @app.route('/api/products')
@@ -89,9 +102,10 @@ def like(id):
 
 def query_all():
     print("SDS an nhàn")
-    list = glassQuantityItems.query.all()
+    list = infor.query.all()
     for item in list:
-        print("id",item.id_item,item.name.encode("utf-8"),item.Quantity)
+        print(item)
+        #print("id",item.id_item,item.name.encode("utf-8"),item.Quantity)
     list = paymentinf.query.all()
     for item in list:
         print(item.tmnCode)
