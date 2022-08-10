@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import requests
 
 from dataclasses import dataclass
@@ -7,13 +9,12 @@ from flask import Flask, jsonify, abort
 from flask_sqlalchemy import SQLAlchemy
 
 class DbConfig(object):
-    SQLALCHEMY_DATABASE_URI = 'sqlite:///data.db'
-    """ multi database files
+    SQLALCHEMY_DATABASE_URI = 'sqlite:///items.db'
+    
     SQLALCHEMY_BINDS = {
-            'db2': 'mysql://user:pass@localhost/database2',
-            'db3': 'mysql://user:pass@localhost/database3'
+            'data': 'sqlite:///data.db'
     }
-    """
+    
 
 app = Flask(__name__)
 #app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -25,6 +26,7 @@ db = SQLAlchemy(app)
 
 @dataclass
 class paymentinf(db.Model):
+    __bind_key__ = 'data'
     name: str
     tmnCode: str
     haskKey: str
@@ -33,6 +35,37 @@ class paymentinf(db.Model):
     tmnCode = db.Column(db.String(200))
     haskKey = db.Column(db.String(200))
     partCode = db.Column(db.String(200))
+
+@dataclass
+class QuantityItems(db.Model):
+    __tablename__  = "QuantityItems"
+    id_item = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(200))
+    Quantity = db.Column(db.Integer)
+
+@dataclass
+class glassQuantityItems(db.Model):
+    __tablename__  = "glassQuantityItems"
+    id_item: int
+    name: str
+    Quantity: int
+    id_item = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(200))
+    Quantity = db.Column(db.Integer)
+
+@dataclass
+class orderList(db.Model):
+    id_order = db.Column(db.Integer, primary_key=True)
+    id_menu = db.Column(db.Integer)
+    type = db.Column(db.Integer)
+    percent = db.Column(db.Integer)
+
+@dataclass
+class infor(db.Model):
+    paras = db.Column(db.String(200), primary_key=True)
+    value = db.Column(db.String(200))
+    pass1 = db.Column(db.String(200)) ###################
+    secre = db.Column(db.String(200))
 
 @app.route('/api/products')
 def index():
@@ -55,7 +88,13 @@ def like(id):
     })
 
 def query_all():
-    print(paymentinf.query.all())
+    print("SDS an nhàn")
+    list = glassQuantityItems.query.all()
+    for item in list:
+        print("id",item.id_item,item.name.encode("utf-8"),item.Quantity)
+    list = paymentinf.query.all()
+    for item in list:
+        print(item.tmnCode)
 
 def update_data():
     admin = paymentinf.query.filter_by(name='zalo').first()
