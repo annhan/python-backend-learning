@@ -6,11 +6,19 @@ from flask import Flask, jsonify, abort
 #from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 
-
+class DbConfig(object):
+    SQLALCHEMY_DATABASE_URI = 'sqlite:///data.db'
+    """ multi database files
+    SQLALCHEMY_BINDS = {
+            'db2': 'mysql://user:pass@localhost/database2',
+            'db3': 'mysql://user:pass@localhost/database3'
+    }
+    """
 
 app = Flask(__name__)
 #app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///data.db'
+#app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///data.db'
+app.config.from_object(DbConfig)
 #CORS(app)
 
 db = SQLAlchemy(app)
@@ -58,6 +66,7 @@ def add_data():
     product_user = paymentinf(name='1', tmnCode='product_id', haskKey='3', partCode='4')
     db.session.add(product_user)
     db.session.commit()
+
 if __name__ == '__main__':
     query_all()
     update_data()
