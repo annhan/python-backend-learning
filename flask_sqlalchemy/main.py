@@ -62,11 +62,16 @@ class orderList(db.Model):
     id_order: int
     id_menu: int
     type: int
-    type: int
+    percent: int
     id_order = db.Column(db.Integer, primary_key=True)
     id_menu = db.Column(db.Integer)
     type = db.Column(db.Integer)
-    type = db.Column(db.Integer)
+    percent = db.Column(db.Integer)
+
+def delete(id, list):
+    obj = orderList.query.filter_by(id_order=id,id_menu=list[0],type=list[1],percent=list[2]).one()
+    db.session.delete(obj)
+    db.session.commit()
 
 @dataclass
 class infor(db.Model):
@@ -114,6 +119,8 @@ def update_data():
     admin = paymentinf.query.filter_by(name='zalo').first()
     admin.partCode = 'my_new_email@example.com'
     db.session.commit()   
+
+
 
 def add_data():
     product_user = paymentinf(name='1', tmnCode='product_id', haskKey='3', partCode='4')
